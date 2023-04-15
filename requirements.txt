@@ -1,4 +1,4 @@
 mysql-connector-python==8.0.26
-re==2.2.1
-datetime==4.0.1
-pandas==1.4.1
+re
+datetime
+pandas
