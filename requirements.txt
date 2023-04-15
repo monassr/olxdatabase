@@ -1,4 +1,2 @@
 mysql-connector-python==8.0.26
-re
-datetime
 pandas
