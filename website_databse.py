@@ -86,7 +86,7 @@ def search(mydb):
 
     st.sidebar.header("Search For")
     
-    user_select=st.sidebar.selectbox('Options',('Seller Rating', 'Ads', 'Reviews', 'Used Cars','Ads From Seller'), index=1)
+    user_select=st.sidebar.selectbox('Options',('Seller Rating', 'Ads', 'Reviews', 'Used Cars','Ads From Seller', 'Top 5 Locations', 'Top 5 Sellers','Top 5 Brand/Models'), index=1)
     sql=""
 
     if((user_select== 'Seller Rating')):
@@ -108,31 +108,32 @@ def search(mydb):
                 try:
                     mycursor = mydb.cursor()
                     mycursor.execute(query)
-                    result = pd.DataFrame(mycursor.fetchall())
+                    output = pd.DataFrame(mycursor.fetchall())
                     
-                    if result.shape[1] == 3:
-                        result.columns = ['Name', 'Average Rating', 'Number of Reviews']
+                    if output.shape[1] == 3:
+                        output.columns = ['Name', 'Average Rating', 'Number of Reviews']
                     
-                    st.subheader('Result:')
-                    st.write(result)
+                    
+                    
+                    st.subheader('Found '+ str(len(output)) + ' Entries')
+                    
+                    st.write(output)
                 except:
                     st.subheader('No Ratings Exist For This Seller')
-            
-        
-        
     elif((user_select== 'Ads')):
         
         query = q_adds()
         mycursor = mydb.cursor()
         mycursor.execute(query)
-        result = pd.DataFrame(mycursor.fetchall())
+        output = pd.DataFrame(mycursor.fetchall())
         
-        if result.shape[1] == 3:
-            result.columns = ['Model', 'Number Of Listings', 'Average Price']
+        if output.shape[1] == 3:
+            output.columns = ['Model', 'Number Of Listings', 'Average Price']
 
 
-        st.subheader('Result:')
-        st.write(result)
+        st.subheader('Found '+ str(len(output)) + ' Entries')
+        
+        st.write(output)
     elif (user_select== 'Reviews'):
 
 
@@ -148,13 +149,13 @@ def search(mydb):
                 """
                 mycursor = mydb.cursor()
                 mycursor.execute(sql)
-                result = pd.DataFrame(mycursor.fetchall())
-                result.columns = ['Price', 'Buyer Email', 'Ad Number', 'Description', 'Rating']
-                result['Ad Number'] = result['Ad Number'].astype(str)
-                result['Ad Number'] = result['Ad Number'].str.replace(',', '')
+                output = pd.DataFrame(mycursor.fetchall())
+                output.columns = ['Price', 'Buyer Email', 'Ad Number', 'Description', 'Rating']
+                output = output.drop('Ad Number', axis=1)
 
-                st.subheader('Result:')
-                st.write(result)
+
+                st.subheader('Found '+ str(len(output)) + ' Entries')
+                st.write(output)
             except:
                 st.subheader('No Reviews For Given Ad')
                 
@@ -162,8 +163,8 @@ def search(mydb):
                 
         
         location = st.text_input("Enter Location")
-        upper_price = st.text_input("Enter Upper Price range")
-        lower_price = st.text_input("Enter Lower Price range")
+        upper_price = st.text_input("Enter Max Price")
+        lower_price = st.text_input("Enter Min Price")
         features = st.text_input("Enter Features seperated by Commas").split(',')
         
         query =  """
@@ -174,26 +175,26 @@ def search(mydb):
             """.format(location,lower_price,upper_price)
         
         for feature in features:
-            query += f"AND EXISTS (SELECT 1 FROM adfeatures WHERE adfeatures.AdID = ad.Ad_ID AND adfeatures.features LIKE '{feature}%')\n"
+            query += "AND EXISTS (SELECT 1 FROM adfeatures WHERE adfeatures.AdID = ad.Ad_ID AND adfeatures.features LIKE '{}%')\n".format(feature)
         
         if st.button('Submit'):
             
             mycursor = mydb.cursor()
             mycursor.execute(query)
-            result = pd.DataFrame(mycursor.fetchall())
+            output = pd.DataFrame(mycursor.fetchall())
             
-            if result.shape[1] > 0:
+            if output.shape[1] > 0:
                 
-                result.columns = ["Agent_Number", "Ad_ID",  "Payment_options", "Transmission_type",  "Brand", "Model",  "Color", "Fuel_Type", "Year_model", "Lower_Engine_Capacity", "Upper_Engine_Capacity", "Lower_Kilometer", "Upper_Kilometer", "Price"]
+                output.columns = ["Agent_Number", "Ad_ID",  "Payment_options", "Transmission_type",  "Brand", "Model",  "Color", "Fuel_Type", "Year_model", "Lower_Engine_Capacity", "Upper_Engine_Capacity", "Lower_Kilometer", "Upper_Kilometer", "Price"]
                 
-                result['Agent_Number'] = result['Agent_Number'].astype(str)
-                result['Agent_Number'] = result['Agent_Number'].str.replace(',', '')
+                output['Agent_Number'] = output['Agent_Number'].astype(str)
+                output['Agent_Number'] = output['Agent_Number'].str.replace(',', '')
                 
-                result['Ad_ID'] = result['Ad_ID'].astype(str)
-                result['Ad_ID'] = result['Ad_ID'].str.replace(',', '')
+                output['Ad_ID'] = output['Ad_ID'].astype(str)
+                output['Ad_ID'] = output['Ad_ID'].str.replace(',', '')
                 
-            st.subheader('Result:')
-            st.write(result)
+            st.subheader('Found '+ str(len(output)) + ' Entries')
+            st.write(output)
     
     elif(user_select == 'Ads From Seller'):
         
@@ -212,18 +213,108 @@ def search(mydb):
             
             mycursor = mydb.cursor()
             mycursor.execute(query)
-            result = pd.DataFrame(mycursor.fetchall())
+            output = pd.DataFrame(mycursor.fetchall())
             
-            if result.shape[1] > 0:
+            if output.shape[1] > 0:
                 
-                result.columns = ["Ad_ID",  "Payment_options", "Transmission_type",  "Brand", "Model",  "Color", "Fuel_Type", "Year_model", "Lower_Engine_Capacity", "Upper_Engine_Capacity", "Lower_Kilometer", "Upper_Kilometer", "Price"]
+                output.columns = ["Ad_ID",  "Payment_options", "Transmission_type",  "Brand", "Model",  "Color", "Fuel_Type", "Year_model", "Lower_Engine_Capacity", "Upper_Engine_Capacity", "Lower_Kilometer", "Upper_Kilometer", "Price"]
                 
-                result['Ad_ID'] = result['Ad_ID'].astype(str)
-                result['Ad_ID'] = result['Ad_ID'].str.replace(',', '')
+                output['Ad_ID'] = output['Ad_ID'].astype(str)
+                output['Ad_ID'] = output['Ad_ID'].str.replace(',', '')
                 
-            st.subheader('Result:')
-            st.write(result)
+            st.subheader('Found '+ str(len(output)) + ' Entries')
+            st.write(output)
             
+    elif(user_select == 'Top 5 Locations'):
+        
+        brand = st.text_input("Enter Brand: ")
+        model = st.text_input("Enter Model: ")
+        
+        query = """  
+        SELECT Location, COUNT(Ad_ID) as Total_Ads, AVG(Price) as Average_Price
+        FROM ad
+        WHERE Brand = '{}' AND Model = '{}'
+        GROUP BY Location
+        ORDER BY Total_Ads DESC, Average_Price 
+        LIMIT 5;
+        """.format(brand,model)
+        
+        try:
+            if st.button('Submit'):
+            
+                mycursor = mydb.cursor()
+                mycursor.execute(query)
+                output = pd.DataFrame(mycursor.fetchall())
+                
+                if output.shape[1] > 0:
+                    output.columns = ["Location", "Number of Invetory", "Average Price"]
+                
+                output['Average Price'] = output['Average Price'].astype(str)
+                output['Average Price'] = output['Average Price'].str.replace(',', '')
+                
+                st.subheader('Found '+ str(len(output)) + ' Entries')
+                st.write(output)
+        except:
+                st.subheader('ERROR')
+                
+    elif(user_select == 'Top 5 Sellers'):
+        
+        query = f"""
+            SELECT AD.Agent_Number, agent.name, COUNT(AD.Ad_ID) as Total_Listings, AVG(AD.Price) as Avg_Price
+            FROM ad AD
+            JOIN agent ON AD.Agent_Number = agent.Phone_Number
+            GROUP BY AD.Agent_Number, agent.name
+            ORDER BY Total_Listings DESC, Avg_Price 
+            LIMIT 5;
+            """
+
+        mycursor = mydb.cursor()
+        mycursor.execute(query)
+        output = pd.DataFrame(mycursor.fetchall())
+        
+        if output.shape[1] > 0:
+            output.columns = ["Phone Number", "Name", "Total Listings", "Average Price"]
+        
+        output['Average Price'] = output['Average Price'].astype(str)
+        output['Average Price'] = output['Average Price'].str.replace(',', '')
+        
+        output['Phone Number'] = output['Phone Number'].astype(str)
+        output['Phone Number'] = output['Phone Number'].str.replace(',', '')
+        
+        st.subheader('Found '+ str(len(output)) + ' Entries')
+        st.write(output)
+    
+    elif(user_select == 'Top 5 Brand/Models'):
+                
+        upper = st.text_input("Enter Max Year: ")
+        lower = st.text_input("Enter Min Year: ")
+        
+        query = """
+            SELECT Brand, Model, COUNT(Ad_ID) as Total_Inventory, AVG(Price) as Average_Price
+            FROM ad
+            WHERE Year_model BETWEEN '{}' AND '{}'
+            GROUP BY Brand, Model
+            ORDER BY Total_Inventory DESC, Average_Price
+            LIMIT 5;
+            """.format(lower,upper)
+
+        try:
+            if st.button('Submit'):
+            
+                mycursor = mydb.cursor()
+                mycursor.execute(query)
+                output = pd.DataFrame(mycursor.fetchall())
+                
+                if output.shape[1] > 0:
+                    output.columns = ["Brand", "Model", "Number of Invertory", 'Average Price']
+                
+                output['Average Price'] = output['Average Price'].astype(str)
+                output['Average Price'] = output['Average Price'].str.replace(',', '')
+                
+                st.subheader('Found '+ str(len(output)) + ' Entries')
+                st.write(output)
+        except:
+                st.subheader('ERROR')
          
         
         
